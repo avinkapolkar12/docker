@@ -61,30 +61,12 @@ const authenticateToken = (req, res, next) => {
 
 // Routes
 
-// Simple GET request - Health check
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
     message: 'E-commerce API is running successfully!', 
     timestamp: new Date().toISOString(),
-    status: 'OK',
-    version: '1.0.0'
-  });
-});
-
-// Simple GET request - API info
-app.get('/api', (req, res) => {
-  res.json({ 
-    message: 'Welcome to E-commerce API', 
-    endpoints: {
-      health: '/api/health',
-      products: '/api/products',
-      categories: '/api/categories',
-      auth: {
-        register: '/api/auth/register',
-        login: '/api/auth/login'
-      },
-      orders: '/api/orders'
-    }
+    status: 'OK'
   });
 });
 
@@ -95,26 +77,16 @@ app.post('/api/auth/register', async (req, res) => {
 
     // Validate input
     if (!email || !password || !name) {
-      return res.status(400).json({ 
-        message: 'All fields are required',
-        missing: {
-          email: !email,
-          password: !password,
-          name: !name
-        }
-      });
+      return res.status(400).json({ message: 'All fields are required' });
     }
 
     if (password.length < 6) {
       return res.status(400).json({ message: 'Password must be at least 6 characters long' });
     }
 
-    console.log('Registration attempt for:', email);
-
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      console.log('User already exists:', email);
       return res.status(400).json({ message: 'User already exists' });
     }
 
@@ -128,9 +100,7 @@ app.post('/api/auth/register', async (req, res) => {
       name
     });
     
-    console.log('Attempting to save user:', email);
     await user.save();
-    console.log('User saved successfully:', email);
 
     // Generate token
     const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
@@ -145,23 +115,12 @@ app.post('/api/auth/register', async (req, res) => {
   } catch (error) {
     console.error('Registration error:', error);
     
-    // Handle specific MongoDB errors
+    // Handle duplicate key error
     if (error.code === 11000) {
       return res.status(400).json({ message: 'Email already exists' });
     }
     
-    if (error.name === 'ValidationError') {
-      const validationErrors = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({ 
-        message: 'Validation failed', 
-        errors: validationErrors 
-      });
-    }
-    
-    res.status(500).json({ 
-      message: 'Server error during registration',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json({ message: 'Server error during registration' });
   }
 });
 

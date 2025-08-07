@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Docker sample project (not part of main e-commerce app)
+welcome-to-docker/
